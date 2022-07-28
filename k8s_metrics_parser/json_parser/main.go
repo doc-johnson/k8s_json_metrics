@@ -10,7 +10,7 @@ import (
 	"regexp"
 )
 
-var Link = JSON_METRICS_LINK
+var Link = JSON_METRICS_LINK // https://k8s-vip.int:6443/apis/metrics.k8s.io
 var Token = JSON_METRICS_TOKEN
 
 type Items struct {
