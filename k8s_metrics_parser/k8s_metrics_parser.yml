@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-json-metrics
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: k8s-json-metrics
+  replicas: 1
+  revisionHistoryLimit: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge      : 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: k8s-json-metrics
+    spec:
+      imagePullSecrets:
+        - name: secret
+      containers:
+      - name: k8s-json-metrics
+        resources:
+          limits:
+            cpu:  0.18
+            memory: 40Mi
+          requests:
+            cpu: 0.06
+            memory: 20Mi
+        readinessProbe:
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 5
+          httpGet:
+            path: /health
+            port: 80
+        livenessProbe:
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 5
+          httpGet:
+            path: /health
+            port: 80
+        image: $RELEASE_IMAGE
+        ports:
+        - containerPort: 80
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: k8s-json-metrics
+  namespace: monitoring
+spec:
+  type: NodePort
+  selector:
+      app: k8s-json-metrics
+  ports:
+  - name: k8s-json-metrics
+    protocol: TCP
+    port: 80
+    targetPort: 80
+    nodePort: 31777
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret
+  namespace: monitoring
+data:
+  .dockerconfigjson: $REG_CRED
+type: kubernetes.io/dockerconfigjson
